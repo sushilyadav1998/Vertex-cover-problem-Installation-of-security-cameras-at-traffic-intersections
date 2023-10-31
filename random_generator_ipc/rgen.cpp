@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include <vector>
 #include <cmath>
+#include <chrono>
+#include <thread>
 
 using namespace std;
 
@@ -12,16 +14,16 @@ int l_min=5, l_max=5;
 int c_min=-20, c_max=20;     
 
 int randomGen(int min, int max) {
-    std::ifstream urandom("/dev/urandom");
+    ifstream urandom("/dev/urandom", ios::binary);
 
-    if (urandom.fail()) {
-        std::cerr << "Error: cannot open /dev/urandom\n";
+    if (!urandom) {
+        cerr << "Error: cannot open /dev/urandom\n";
         exit(EXIT_FAILURE);
     }
     int N = (max - min) + 1;
     int num = 0;
     while (true) {
-        urandom.read((char*)&num, 1);
+        urandom.read(reinterpret_cast<char*>(&num), sizeof(num));
         num = num % N + min;
         if (num <= max && num >= min) {
             urandom.close();
@@ -113,12 +115,18 @@ public:
     vector<string> streetNameGen();
     vector<string> coordinatesGen();
     vector<vector<Line>> lineGen();
-    int getStreetCount(){ return stCount;}
+    int getStreetCount()
+    { 
+        return stCount;
+    }
 
 };
 
 street::street(int min,int max)
 {
+    if (min > max) {
+        throw invalid_argument("Minimum cannot be greater than maximum.");
+    }
     st_min=min;
     st_max=max;
     stCount=randomGen(st_min,st_max);
@@ -216,14 +224,12 @@ vector<string> street::coordinatesGen()
 
         if(cod.size()==numOfcoordinates )
         {
-            //cout<<"st:"<<to_string(i+1)<<", "<<"n:"<<numOfcoordinates<<"= ";
             for (int ii=0;ii<cod.size();ii++)
             {
                 coordinates_str+="("+to_string(cod[ii].getX())+","+to_string(cod[ii].getY())+") ";
-                //cout<<"("<<cod[ii].getX()<<","<<cod[ii].getY()<<"),";
+ 
             }
-            //cout<<endl;
-            //cout<<"====================================================================\n";
+
             coordinates.push_back(coordinates_str);
             cod_vector.push_back(cod);         
         }
@@ -238,12 +244,10 @@ vector<string> street::coordinatesGen()
     }
     if(flag_intersec > 1)
     {   
-        //cerr<<flag_intersec<<endl;
         return coordinates;
     }
     else
     {
-        //cerr<<"here\n";
         coordinates.clear();
         return coordinates;
     }
@@ -259,24 +263,36 @@ int parseArg(int argc, char **argv, int* s_max, int* n_max, int* l_max, int* c_m
     while ((opt = getopt(argc, argv, "s:n:l:c:")) != -1) {
         switch(opt) {
             case 's':
+            if (atoi(optarg) > 2) {
                 *s_max = atoi(optarg);
+            }
+            else {
+                    cerr << "Error: s must be greater than 2\n" << endl;;
+                    exit(EXIT_FAILURE);
+            }
                 break;
             case 'n':
+                if (atoi(optarg) > 1) {
                 *n_max = atoi(optarg);
+                    }
+                else {
+                        cerr << "Error: n must be greater than 1\n" << endl;;
+                        exit(EXIT_FAILURE);
+                     }
                 break;
             case 'l':
+                if (atoi(optarg) >= 5) {
                 *l_max = atoi(optarg);
+                  }
+                else {
+                        cerr << "Error: l must be greater than or equal to 5\n" << endl;;
+                        exit(EXIT_FAILURE);
+                    }
                 break;
             case 'c':
                 *c_min = -atoi(optarg);
                 *c_max = atoi(optarg);
                 break;
-            case ':':
-                cerr << "Error: Option -" << optopt << " requires an argument\n";
-                return 1;
-            case '?':
-                cerr << "Error: Unknown option -" << optopt << "\n";
-                return 1;
             default:
                 cerr << "Error: Invalid option\n";
                 return 1;
@@ -288,43 +304,43 @@ int parseArg(int argc, char **argv, int* s_max, int* n_max, int* l_max, int* c_m
 
 int main(int argc, char **argv)
 {
-    int s,l;
-    parseArg(argc,argv,&s_max,&n_max,&l_max,&c_max,&c_min);
+    // int s_max, n_max, l_max, c_max, c_min;
+    parseArg(argc, argv, &s_max, &n_max, &l_max, &c_max, &c_min);
     vector<string> street_names;
     vector<string> coo;
 
-   while(1)
-   {
-    street st(s_min,s_max); 
-    
-    if(street_names.size()>0)
+    while (true)
     {
-        for (int j=0; j<street_names.size(); j++)
+        street st(s_min,s_max); 
+
+        street_names.clear();
+        street_names = st.streetNameGen();
+        int l = randomGen(l_min,l_max);
+
+        coo = st.coordinatesGen();
+        if (!coo.empty())
         {
-           cout<<"r "<<street_names[j]<< "\n";  
+            for (int i = 0; i < coo.size(); i++)
+            {
+                cout << "a " << street_names[i] << coo[i] << "\n";
+            }
+            cout << "g" << std::endl;
         }
+        else
+        {
+            cerr << "Error: No valid graph generated\n";
+            continue;
+        }
+
+        if (!street_names.empty())
+        {
+            for (const auto& street_name : street_names)
+            {
+                cout << "r " << street_name << "\n";
+            }
+        }
+
+        this_thread::sleep_for(chrono::seconds(l));
     }
-    
-    street_names.clear();
-    street_names=st.streetNameGen();
-    l=randomGen(l_min,l_max);
-
-    coo=st.coordinatesGen();
-    if(!coo.empty())
-    {
-	    for (int i=0; i<coo.size(); i++)     
-	    {
-	        cout <<"a "<<street_names[i]<<coo[i] << "\n";        
-	    }
-	    cout<<"g"<<endl;
-	}
-	else
-	{
-		cerr<<"Error:No valid graph generated\n";
-		continue;
-	}
-
-    sleep(l);
-   } 
     return 0;
 }

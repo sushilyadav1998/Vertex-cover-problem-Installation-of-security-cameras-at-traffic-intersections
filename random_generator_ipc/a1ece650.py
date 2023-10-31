@@ -240,7 +240,7 @@ def main():
         # street_name_Regex = r'( +?\"[a-zA-Z ]+?\"*?)?'
         # coordinates_regex = r' *?((?:\( *?[-]?[0-9]+? *?, *?[-]?[0-9]+? *?\) *?)*) ?$'
         formatted_input = re.match(input_regex, street_input)
-        # print(formatted_input)
+        print(formatted_input)
         # try:
         #     formatted_input = re.match(input_regex, street_input)
         # except Exception:
@@ -257,13 +257,17 @@ def main():
             try:
                 raw_coordinates = formatted_input.group(3)
             except:
-                raw_coordinates = None 
+                pass 
             #print(commands)
             #print(street_name)
-            #print(raw_coordinates)    
-        # else:   
-        #     sys.stderr.write("Error: Invalid Input format\n")
-        #     continue
+            #print(raw_coordinates)  
+            # coordinates = re.findall(r'[-]?\d+',raw_coordinates)
+            # coordinates = [[coordinates[i], coordinates[i + 1]] for i in range(len(coordinates) - 1)]
+            # del coordinates[1::2]
+        else:   
+            pass
+            # sys.stderr.write("Error: Invalid Input format\n")
+            # continue
         
         coordinates = re.findall(r'[-]?\d+',raw_coordinates)
         coordinates = [[coordinates[i], coordinates[i + 1]] for i in range(len(coordinates) - 1)]
@@ -287,14 +291,16 @@ def main():
                     streets_dict[street_name] = coordinates
                     # print(streets_dict)
             except Exception:
-                sys.stdout.write("Error: ’c’ or ’r’ specified for a street that does not exist.\n")
+                pass
+                # sys.stdout.write("Error: ’c’ or ’r’ specified for a street that does not exist.\n")
             
         #To remove the streets
         elif commands == 'r':
             try:
                 del streets_dict[street_name]
             except Exception:
-                sys.stdout.write("Error: ’c’ or ’r’ specified for a street that does not exist.\n")
+                pass
+                # sys.stdout.write("Error: ’c’ or ’r’ specified for a street that does not exist.\n")
             # print(streets_dict)
             
         #generate the output

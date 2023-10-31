@@ -228,7 +228,7 @@ int main(){
                         adjacentVector = g.AdjacentVector();
                     }
                     else {
-                        throw invalid_argument("Invalid Vertex Values!!!");
+                        throw invalid_argument("Error: Invalid Vertex Values!!!");
                     }
                 }
                 catch (const exception& e) {
